@@ -1,0 +1,949 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale = 1.0,maximum-scale = 1.0">
+    <meta name="author" content="Vungle">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Vungle Endcard - Google App</title>
+    <script src="vungle.js"></script>
+    <link rel="stylesheet" href="vungle.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="TweenMax.min.js"></script>
+    <script src="TimelineMax.min.js"></script>
+    <script src="hammer.min.js"></script>
+    <script src="stories.js"></script>
+</head>
+
+<body ontouchstart="ontouchstart">
+    <!-- IEC starts here -->
+
+    <div id="vungle-header" class="portrait-light landscape-light">
+        <a id="vungle-close" data-icon="i" href="javascript:void(0)" onclick="doSomething('close')"></a>
+    </div>
+    <div id="vungle-footer" class="portrait-dark landscape-dark portrait-left landscape-left"><span class="footer" data-icon="q"></span></div>
+
+    <!-- IEC Creative starts here-->
+
+    <div class="template-center-screen" id="iec">
+        <div class="header" id="header">
+                <img src="logo.png">
+        </div>
+        <div id="conversation-starter">
+            <div class="header-2" id="header-2">
+                    What do you like to shop for?
+            </div>
+            <div class = "category-list">
+                <ul>
+                    <li>
+                        <img src="category01.jpg" ontouchstart = "selectCategory(1);">
+                    </li>
+                    <li>
+                        <img src="category04.jpg" ontouchstart = "selectCategory(2);">
+                    </li>
+                    <li>
+                        <img src="category02.jpg" ontouchstart = "selectCategory(3);">
+                    </li>
+                    <li>
+                        <img src="category05.jpg" ontouchstart = "selectCategory(4);">
+                    </li>
+                    <li>
+                        <img src="category03.jpg" ontouchstart = "selectCategory(5);">
+                    </li>
+                    <li>
+                        <img src="category06.jpg" ontouchstart = "selectCategory(6);">
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="window" id="white-window"></div>
+        <div id="chat-window">
+            <div class="speech-wrapper" id="speech-wrapper">
+              <!--<div class="bubble">
+                <div class="txt">
+                  <p class="message" id="initial-message">Hey, check out this Pure CSS speech bubble...</p>
+                </div>
+                <div class="bubble-arrow"></div>
+              </div>
+              <div class="bubble alt">
+                <div class="txt">
+                  <p class="message alt">Nice... this will work great for my new project.</p>
+                </div>
+                <div class="bubble-arrow alt"></div>
+              </div>-->
+            </div>
+
+            <div class="bubble dots" id="dots">
+                <div class="bubble-arrow dots"></div>
+            </div>
+
+            <div class="keyboard" id="options">
+                <!--<div class="option">
+                    Option 1
+                </div>
+                <div class="option">
+                    Option 2
+                </div>
+                <div class="option">
+                    Option 3
+                </div>-->
+            </div>
+        </div>
+
+        <div class="item" id="is-typing">
+            Alex is typing...
+        </div>
+
+        <div id="interactive-tooltip" class="interactive-tooltip visible">
+            <div class="left">
+                <div class="interactive-finger">
+                    <div class="icon"></div>
+                    <div class="dot"></div>
+                </div>
+            </div>
+            <div class="right">
+                <div class="interactive-text">
+                    <span>Interactive Experience</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class = "vungle-cta" id="vungle-cta">
+        <div class = "cta-holder" id = "cta">
+            <a href="javascript:void(0)" onclick="doSomething('download')" class="cta">
+                FREE DOWNLOAD
+            </a>
+        </div>
+    </div>
+
+    <!-- <button id="goFS">Go fullscreen</button> -->
+
+
+    <!-- IEC Creative ends here -->
+
+    <script type="text/javascript">
+
+        var state = 0; //0 - conversation starter, 1 - chat
+        var categorySelected  = 1; //1 is default
+        var chatBotState = 0;
+        var whiteWindow;
+
+        var dots;
+        var optionsDiv;
+        var displayOptions = false;
+        var currentOptions;
+
+        var storyNode = 0;
+        var nextStoryNode = -1;
+        var endConversation = false;
+        var lastMessage = "";
+
+        var date;
+
+        var scene = 0;
+        var elementTapName = "";
+        var initTime = 0;
+
+        function doSomething(s) {
+            return actionClicked(s);
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+
+            initTime = new Date().getTime();
+
+
+            updateState();
+            whiteWindow = document.getElementById("white-window");
+            dots = document.getElementById("dots");
+            dotsMessage = document.getElementById("is-typing");
+            optionsDiv = document.getElementById("options");
+
+            setTimeout(function() {
+                document.getElementById('interactive-tooltip').classList.toggle('visible');
+            }, 2000);
+
+            date = new Date();
+
+            addSwipeAndPanEventListeners();
+        });
+
+        function addSwipeAndPanEventListeners() {
+            var hammertime = new Hammer(document.getElementById("iec"), null);
+            hammertime.get('swipe').set({direction: Hammer.DIRECTION_VERTICAL});
+            hammertime.get('swipe').set({velocity: 0.8});
+        }
+
+        function selectCategory(selection) {
+
+            elementTapName = "";
+
+            switch(selection) {
+                case 1:
+                    elementTapName = "girl-top";
+                    break;
+                case 2:
+                    elementTapName = "boy-top";
+                    break;
+                case 3:
+                    elementTapName = "girl-middle";
+                    break;
+                case 4:
+                    elementTapName = "boy-middle";
+                    break;
+                case 5:
+                    elementTapName = "girl-bottom";
+                    break;
+                case 6:
+                    elementTapName = "boy-bottom";
+                    break;
+            }
+
+
+            categorySelected = selection;
+            // console.log(selection + " category selected");
+            state = 1;
+            updateState();
+            scene++;
+        }
+
+        function updateState(){
+            if (state == 0){
+                document.getElementById("chat-window").style.display = "none";
+                document.getElementById("conversation-starter").style.display = "initial";
+            }
+            if (state == 1){
+                document.getElementById("header").style.display = "block";
+                document.getElementById("header-2").style.opacity = "0";
+                initChatBot();
+                preloadImages();
+            }
+        }
+
+        function initChatBot() {
+            whiteWindow.className += " windowAnim";
+            setTimeout(function(){
+                        document.getElementById("chat-window").style.display = "initial";
+                        document.getElementById("conversation-starter").style.display = "none";
+                        whiteWindow.className += "window";
+                        optionsDiv.style.opacity = "0";
+                        updateChatBot();
+                    },400);
+        }
+
+        function preloadImages() {
+            preload("app_icon.png");
+            switch (categorySelected - 1) {
+                case 0:
+                    preload("fashion1.jpg",
+                            "fashion2.jpg",
+                            "fashion3.jpg",
+                            "fashion4.jpg",
+                            "fashion5.jpg",
+                            "fashion6.jpg",
+                            "fashion7.jpg",
+                            "fashion8.jpg");
+                    break;
+                case 1:
+                    preload("fashionm1.jpg",
+                            "fashionm2.jpg",
+                            "fashionm3.jpg",
+                            "fashionm4.jpg",
+                            "fashionm5.jpg",
+                            "fashionm6.jpg",
+                            "fashionm7.jpg",
+                            "fashionm8.jpg");
+                    break;
+                case 2:
+                    preload("makeup1.jpg",
+                            "makeup2.jpg",
+                            "makeup3.jpg",
+                            "makeup4.jpg",
+                            "makeup5.jpg",
+                            "makeup6.jpg",
+                            "makeup7.jpg",
+                            "makeup8.jpg");
+                    break;
+                case 3:
+                    preload("watchm1.jpg",
+                            "watchm2.jpg",
+                            "watchm3.jpg",
+                            "watchm4.jpg",
+                            "watchm5.jpg",
+                            "watchm6.jpg",
+                            "watchm7.jpg",
+                            "watchm8.jpg");
+                    break;
+                case 4:
+                    preload("watchw1.jpg",
+                            "watchw2.jpg",
+                            "watchw3.jpg",
+                            "watchw4.jpg",
+                            "watchw5.jpg",
+                            "watchw6.jpg",
+                            "watchw7.jpg");
+                    break;
+                case 5:
+                    preload("gadget1.jpg",
+                            "gadget2.jpg",
+                            "gadget3.jpg",
+                            "gadget4.jpg",
+                            "gadget5.jpg",
+                            "gadget6.jpg",
+                            "gadget7.jpg",
+                            "gadget8.jpg");
+                    break;
+            }   
+        }
+
+        var images = new Array();
+        function preload() {
+            for (var i = 0; i < preload.arguments.length; i++) {
+                images[i] = new Image();
+                images[i].src = preload.arguments[i];
+                console.log("Preloaded " + images[i].src);
+            }
+        }
+
+        //Takes actual bot state and goes to next bot state (next storyNode)
+        function updateChatBot(){
+            //Show dots for a while, then add Wish Genie message
+            if (!endConversation){
+                dotsIn();
+                setTimeout(function() {
+                    dotsOut();
+                    instantiateChatMessage();
+                    setTimeout(function(){
+                        repositionChatSpeechWrapper(0.5);
+                    }, 50);
+                    if (displayOptions) {
+                        instantiateOptions();
+                        checkIfPlayerIsIdle();
+                        setTimeout(function(){
+                            introOptionsAnimation();
+                        }, 500);
+                    } else {
+                        setTimeout(function() {
+                            updateChatBot();
+                        }, 600);
+                    }
+                    if (nextStoryNode != -1) {
+                        storyNode = nextStoryNode;
+                        nextStoryNode = -1;
+                    } else {
+                        storyNode++;
+                    }
+
+                }, getWaitingTime());
+            } else {
+                setTimeout(function(){
+                    finalCtaAnimation();
+                }, 2000);
+            }
+        }
+
+        var playerIsIdle = 0;
+        var idleWaitTime = 5000;
+        function checkIfPlayerIsIdle(){
+            // console.log("checking if player is idle");
+            setTimeout(function(){
+                if (displayOptions) {
+                    // console.log("idle!");
+                    //If the player hasn't selected an option yet
+                    switch(playerIsIdle){
+                        // case 0:
+                        //     instantiateThisChatMessage(processMessage("Hey, you know you can talk to me by selecting one of those options, right?;)"));
+                        //     playerIsIdle++;
+                        //     repositionChatSpeechWrapper(.6);
+                        // break;
+                        // case 1:
+                        //     instantiateThisChatMessage(processMessage("You there?*poutingcat*"));
+                        //     repositionChatSpeechWrapper(.6);
+                        //     playerIsIdle++;
+                        // break;
+                    }
+                    idleWaitTime += 2000;
+                } else {
+                    // console.log("not idle");
+                }
+            }, idleWaitTime);
+        }
+
+        function introOptionsAnimation(){
+            optionsDiv.style.opacity = "1";
+            if (window.innerHeight > window.innerWidth) {
+                TweenLite.fromTo(
+                    optionsDiv,
+                    .4,
+                    {
+                        bottom: "0vh",
+                        transform: "scaleY(0.01)",
+                    },
+                    {
+
+                        bottom: "11vh",
+                        transform: "scaleY(1)",
+                        ease: Back.easeOut.config(2)
+                    });
+            } else {
+                //Landscape
+                TweenLite.fromTo(
+                    optionsDiv,
+                    .4,
+                    {
+                        bottom: "0vh",
+                        transform: "scaleY(0.01)",
+                    },
+                    {
+
+                        bottom: "15vh",
+                        transform: "scaleY(1)",
+                        ease: Back.easeOut.config(2)
+                    });
+            }
+        }
+
+        function outroOptionsAnimation(){
+            if (window.innerHeight > window.innerWidth) {
+                TweenLite.fromTo(
+                    optionsDiv,
+                    .4,
+                    {
+                        bottom: "11vh",
+                        transform: "scaleY(1)",
+                    },
+                    {
+
+                        bottom: "0vh",
+                        transform: "scaleY(0.01)",
+                        ease: Back.easeIn.config(2),
+                        onComplete: function(){
+                            optionsDiv.style.opacity = "0";
+                        }
+                    });                
+            } else {
+                TweenLite.fromTo(
+                    optionsDiv,
+                    .4,
+                    {
+                        bottom: "15vh",
+                        transform: "scaleY(1)",
+                    },
+                    {
+
+                        bottom: "0vh",
+                        transform: "scaleY(0.01)",
+                        ease: Back.easeIn.config(2),
+                        onComplete: function(){
+                            optionsDiv.style.opacity = "0";
+                        }
+                    });
+            }
+        }
+
+        function getNextStoryMessage(){
+            var story = getStory();
+            var chatMessage;
+
+            if (undefined !== story[storyNode].m) {
+                chatMessage = story[storyNode].m;
+                displayOptions = false;
+                if (undefined !== story[storyNode].next){
+                    nextStoryNode = getStoryNodeFromLabel(story[storyNode].next);
+                    if (nextStoryNode == -1){
+                        endConversation = true;
+                    }
+                }
+            } else if (undefined !== story[storyNode].question) {
+                chatMessage = story[storyNode].question;
+                displayOptions = true;
+            }
+            return processMessage(chatMessage);
+        }
+
+        /* Processes message, adds emoticons */
+        function processMessage(message){
+            // console.log(message);
+            if (message.includes(":)")){
+                // if (date.getHours() >= 18) {
+                //     message = message.replace(":)", '<img class="emoji" src="moon_smile.svg">');
+                // } else {
+                //     message = message.replace(":)", '<img class="emoji" src="sun_smile.svg">');
+                // }
+            }
+            message = message.replace(":)", '<img class="emoji" src="1f642.svg">');
+            message = message.replace(":D", '<img class="emoji" src="1f600.svg">');
+            message = message.replace(";)", '<img class="emoji" src="1f609.svg">');
+            message = message.replace("*moneybag*", '<img class="emoji" src="1f4b0.svg">');
+            message = message.replace("*dollar*", '<img class="emoji" src="1f4b5.svg">');
+            message = message.replace("*angel*", '<img class="emoji" src="1f607.svg">');
+            message = message.replace("*dress*", '<img class="emoji" src="1f457.svg">');
+            message = message.replace("*shoe*", '<img class="emoji" src="1f460.svg">');
+            message = message.replace("*handok*", '<img class="emoji" src="1f44c.svg">');
+            message = message.replace("*moneyface*", '<img class="emoji" src="1f911.svg">');
+            message = message.replace("*fire*", '<img class="emoji" src="1f525.svg">');
+            message = message.replace("*thumbsup*", '<img class="emoji" src="1f44d.svg">');
+            message = message.replace("*phone*", '<img class="emoji" src="1f4f2.svg">');
+            message = message.replace("*fingerright*", '<img class="emoji" src="1f449.svg">');
+            message = message.replace("*shopping*", '<img class="emoji" src="1f6cd.svg">');
+            message = message.replace("*nails*", '<img class="emoji" src="1f485.svg">');
+            message = message.replace("*lipstick*", '<img class="emoji" src="1f484.svg">');
+            message = message.replace("*present*", '<img class="emoji" src="1f381.svg">');
+            message = message.replace("*watch*", '<img class="emoji" src="231a.svg">');
+            message = message.replace("*martian*", '<img class="emoji" src="1f47e.svg">');
+            message = message.replace("*tie*", '<img class="emoji" src="1f454.svg">');
+            message = message.replace("*suit*", '<img class="emoji" src="1f574.svg">');
+            // console.log(message);
+            return message;
+        }
+
+        function getNextStoryImages(){
+            var story = getStory();
+
+            if (undefined !== story[storyNode].images) {
+                return story[storyNode].images;
+            }
+            return null;
+        }
+
+        function getOptions(){
+            currentOptions = getStory()[storyNode].answers;
+            // console.log(currentOptions);
+            return currentOptions;
+        }
+
+        function getStory() {
+            switch (categorySelected - 1) {
+                case 0:
+                return story1;
+                break;
+                case 1:
+                return story2;
+                break;
+                case 2:
+                return story3;
+                break;
+                case 3:
+                return story4;
+                break;
+                case 4:
+                return story5;
+                break;
+                case 5:
+                return story6;
+                break;
+            }
+        }
+
+        function getWaitingTime() {
+            var story = getStory();
+
+            if (undefined !== story[storyNode].wait) {
+                return story[storyNode].wait;
+            }
+            return 1500;
+        }
+
+        function instantiateChatMessage(){
+            var div = document.createElement("div");
+            div.className = "bubble";
+            var divTxt = document.createElement("div");
+            divTxt.className = "txt";
+            var divMessage = document.createElement("div");
+            divMessage.className = "message";
+
+            lastMessage = getNextStoryMessage();
+            divMessage.innerHTML = lastMessage;
+
+            divTxt.appendChild(divMessage);
+            var divArrow = document.createElement("div");
+            divArrow.className="bubble-arrow";
+            div.appendChild(divTxt);
+            div.appendChild(divArrow);
+            document.getElementById("speech-wrapper").appendChild(div);
+
+            //If there are, we add images
+            var images = getNextStoryImages();
+            if (images != null) {
+                var divImages = document.createElement("div");
+                divImages.className = "bubbleImages";
+                for (var i = 0; i < images.length; i++) {
+                    var imgDiv = document.createElement("img");
+                    imgDiv.src = images[i];
+                    imgDiv.setAttribute("id",images[i].split(".")[0]);
+                    // imgDiv.setAttribute("ontouchstart", imageTouched());
+                    // console.log(imgDiv.src);
+                    divImages.appendChild(imgDiv);
+                }
+                div.appendChild(divImages);
+            }
+
+            if (images != null) {
+                for (var i = 0; i < images.length; i++) {
+                    // console.log(document.getElementById(images[i].split(".")[0]));
+                    var imageSrc = images[i].split(".")[0];
+                    document.getElementById(images[i].split(".")[0]).addEventListener("touchstart", function(){
+                        var srcName = this.src;
+                        // console.log(srcName.substring(srcName.lastIndexOf("/") + 1, srcName.length).split(".")[0]);
+                        // amplitudeLogEvent("ELEMENT_TAP", srcName.substring(srcName.lastIndexOf("/") + 1, srcName.length).split(".")[0]);
+                    });
+                }
+            }
+        }
+
+        function instantiateThisChatMessage(message){
+            var div = document.createElement("div");
+            div.className = "bubble";
+            var divTxt = document.createElement("div");
+            divTxt.className = "txt";
+            var divMessage = document.createElement("div");
+            divMessage.className = "message";
+            divMessage.innerHTML = message;
+            divTxt.appendChild(divMessage);
+            var divArrow = document.createElement("div");
+            divArrow.className="bubble-arrow";
+            div.appendChild(divTxt);
+            div.appendChild(divArrow);
+            document.getElementById("speech-wrapper").appendChild(div);
+        }
+
+        function instantiateUserMessage(opt){
+            var div = document.createElement("div");
+            div.className = "bubble alt";
+            var divTxt = document.createElement("div");
+            divTxt.className = "txt";
+            var txtP = document.createElement("div");
+            txtP.className = "message alt";
+            txtP.innerHTML = processMessage(currentOptions[opt].m);
+            divTxt.appendChild(txtP);
+            var divArrow = document.createElement("div");
+            divArrow.className="bubble-arrow alt";
+            div.appendChild(divTxt);
+            div.appendChild(divArrow);
+            document.getElementById("speech-wrapper").appendChild(div);
+        }
+
+        function removeChildren(divObject) {
+            while (divObject.hasChildNodes()) {
+                divObject.removeChild(divObject.lastChild);
+            }
+        }
+
+        function instantiateOptions(){
+            removeChildren(optionsDiv);
+            var options = getOptions();
+            // console.log(options);
+            for (var i = 0 ; i < options.length; i++) {
+                var div = document.createElement("div");
+                div.className = "option";
+                div.innerHTML = processMessage(options[i].opt);
+                div.setAttribute("id", "option" + i);
+                optionsDiv.appendChild(div);
+            }
+            document.getElementById("option0").addEventListener("touchstart", function(){
+                // console.log("need to play " + currentOptions[0].next);
+                optionChosen(0);
+            });
+            if (options.length > 1) {
+                document.getElementById("option1").addEventListener("touchstart", function(){
+                    // console.log("need to play " + currentOptions[1].next);
+                    optionChosen(1);
+                });
+            }
+            if (options.length > 2) {
+                document.getElementById("option2").addEventListener("touchstart", function(){
+                    // console.log("need to play " + currentOptions[2].next);
+                    optionChosen(2);
+                });
+            }
+        }
+
+        function optionChosen (opt){
+
+            // amplitudeLogEvent("ELEMENT_TAP", "option-" + opt);
+
+            updateScene(opt);
+
+            var nextLabel = currentOptions[opt].next;
+            instantiateUserMessage(opt);
+            repositionChatSpeechWrapper(0.5);
+            storyNode = getStoryNodeFromLabel(nextLabel);
+            outroOptionsAnimation();
+            setTimeout(function() {
+                updateChatBot();
+            }, 300);
+        }
+
+        function updateScene(opt) {
+            opt++;
+            if (scene == 3 || scene == 8) {
+                scene += opt;
+            } else if (scene == 2) {
+                if (opt == 1) {
+                    scene = 3;
+                } else if (opt == 2) {
+                    scene = 8;
+                }
+            } else if (scene == 1){
+                scene++;
+            } else {
+                scene+=2;
+            }
+        }
+
+        function getStoryNodeFromLabel(label){
+            var story = getStory();
+            for (var i = 0; i < story.length ; i++){
+                if (undefined !== story[i].label) {
+                    if (story[i].label == label) {
+                        return i;
+                    }
+                }
+            }
+            return -1;
+        }
+
+        /* Moves contents in speech bubbles up when they exceed size of screen */
+        function repositionChatSpeechWrapper(duration){
+            var scrollAmount = 35;
+            if (window.innerHeight > window.innerWidth) {
+                scrollAmount = 35;
+                if (lastMessage == "What do you like to shop for?") {
+                    scrollAmount = 70;
+                }
+            } else {
+                scrollAmount = 25;
+            }
+
+            if (document.getElementById("speech-wrapper").offsetHeight > (100-scrollAmount) * window.innerHeight/100) {
+                var newTopValue = (0 * window.innerHeight/100 - (document.getElementById("speech-wrapper").offsetHeight - window.innerHeight) - scrollAmount * window.innerHeight/100);
+                TweenLite.to(
+                    document.getElementById("speech-wrapper"),
+                    duration,
+                    {
+                        top: newTopValue,
+                    });
+            } 
+        }
+
+        /* Moves contents in speech bubbles up when they exceed size of screen */
+        function repositionChatSpeechWrapperFinal(duration){
+            if (window.innerHeight > window.innerWidth) {
+                scrollAmount = 32;
+            } else {
+                if (window.innerHeight >= 768) {
+                    scrollAmount = 23;
+                } else {
+                    scrollAmount = 20;
+                }
+            }
+
+            if (document.getElementById("speech-wrapper").offsetHeight > (100-scrollAmount) * window.innerHeight/100) {
+                var newTopValue = (0 * window.innerHeight/100 - (document.getElementById("speech-wrapper").offsetHeight - window.innerHeight) - scrollAmount * window.innerHeight/100);
+                TweenLite.to(
+                    document.getElementById("speech-wrapper"),
+                    duration,
+                    {
+                        top: newTopValue,
+                    });
+            } 
+        }
+
+        function finalCtaAnimation(){
+            //App icon
+            var div = document.createElement("div");
+            div.className = "app-icon";
+            var imgDiv = document.createElement("img");
+            imgDiv.src = "app_icon.png";
+            div.appendChild(imgDiv);
+            //Slogan
+            var divSlogan = document.createElement("div");
+            divSlogan.className = "slogan";
+            divSlogan.innerHTML = "Shopping made fun";
+            div.appendChild(divSlogan);
+
+            document.getElementById("speech-wrapper").appendChild(div);
+            setTimeout(function(){
+                    // console.log("final cta animation reposition!");
+                        repositionChatSpeechWrapperFinal(1.5);
+                        if (window.innerHeight < window.innerWidth) {
+                            TweenLite.to(
+                                document.getElementById("header"),
+                                1,
+                                {
+                                    opacity: 0
+                                });
+                            TweenLite.to(
+                                document.getElementById("vungle-cta"),1,
+                                {
+                                    left: 0,
+                                    right: 0,
+                                    bottom: "20vh",
+                                });
+                        }
+                    }, 200);
+        }
+
+        function dotsIn() {
+            dots.style.opacity = "1";
+            dotsMessage.style.opacity = "1";
+        }
+
+        function dotsOut() {
+            dots.style.opacity = "0";
+            dotsMessage.style.opacity = "0";
+        }
+
+        // TweenMax animations library
+        function show(element, duration, dly) {
+            element.style.display = "block";
+            TweenLite.to(
+                element, duration,
+                {
+                    opacity: 1,
+                    delay: dly,
+                    ease: Quad.easeInOut,
+                });
+        }
+
+        function up(element, duration, dly) {
+            TweenLite.to(
+                element, duration,
+                {
+                    delay: dly,
+                    transform: 'translate3d(0,-2vw,0)',
+                    ease: Quad.easeInOut,
+                    onComplete: function () {
+                        //
+                    }
+                });
+        }
+
+        function hide(element, duration, dly) {
+            TweenLite.to(
+                element, duration, {
+                    opacity: 0,
+                    delay: dly,
+                    ease: Quad.easeInOut,
+                    onComplete: function () {
+                        element.style.display = "none";
+                    }
+                });
+        }
+
+        function zoomOut(e, d) {
+            TweenLite.fromTo(
+                e, .6, {
+                    scale: 1.5
+                }, {
+                    scale: 1,
+                    delay: d,
+                    ease: Quad.easeInOut,
+                });
+        }
+
+        function zoomIn(e, d) {
+            TweenLite.fromTo(
+                e, .6, {
+                    scale: 1
+                }, {
+                    scale: 1.5,
+                    delay: d,
+                    ease: Quad.easeInOut,
+                });
+        }
+
+        function explode(e, d) {
+            TweenLite.fromTo(
+                e, .6, {
+                    scale: .5,
+                    opacity: 0
+                }, {
+                    scale: 1,
+                    opacity: 1,
+                    delay: d,
+                    ease: Expo.easeOut,
+                    onComplete: function () {
+                        hide(e, 0);
+                        zoomIn(e, 0);
+                    }
+                });
+        }
+
+        function moveUp(e, d) {
+            TweenLite.to(
+                e, .6, {
+                    top: -150,
+                    delay: d,
+                    ease: Expo.easeInOut,
+                });
+        }
+
+        function handAni(e, d) {
+            var tl = new TimelineMax({
+                repeat: 0,
+                repeatDelay: .5,
+                onComplete: hide(e,d+.8)
+            });
+
+            show(e,d);
+            tl.to(
+                e, 1, {
+                    y: -150,
+                    delay: d - .1,
+                    ease: Expo.easeInOut
+                });
+        }
+
+        function drop(e, d) {
+            var randomRotation = Math.floor(Math.random() * 350);
+            randomRotation *= ((Math.random() > 0.5) ? 1 : -1);
+            var windowHeight = window.innerHeight;
+            TweenLite.to(
+                e, 2.4, {
+                    top: windowHeight + 100,
+                    rotation: randomRotation,
+                    delay: d,
+                    ease: Expo.easeInOut,
+                });
+        }
+
+        // Image rotater 
+        function rotateImg(e, t, d, i) {
+            var myNum = 0;
+            var TempTimer = setInterval(function () {
+                if (myNum < t.length - 1) {
+                    myNum++;
+                } else if (i === "true") {
+                    myNum = 0;
+                } else {
+                    clearInterval(TempTimer);
+                }
+                e.setAttribute('src', t[myNum]);
+
+            }, d);
+            return TempTimer;
+        }
+
+        function isPortrait(){
+            return window.innerHeight > window.innerWidth;
+        }
+
+        function isLandscape() {
+            return window.innerWidth > window.innerHeight;
+        }
+
+        window.onresize = function () {
+            console.log("resize");
+            repositionChatSpeechWrapper(.5);
+        };
+        document.ontouchmove = function (e) {
+            e.preventDefault();
+        }
+
+    </script>
+</body>
+
+</html>
