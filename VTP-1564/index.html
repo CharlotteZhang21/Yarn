@@ -171,6 +171,7 @@
         });
 
         function addSwipeAndPanEventListeners() {
+            console.log("hammer");
             var hammertime = new Hammer(document.getElementById("iec"), null);
             hammertime.get('swipe').set({direction: Hammer.DIRECTION_VERTICAL});
             hammertime.get('swipe').set({velocity: 0.8});

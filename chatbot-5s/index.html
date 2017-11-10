@@ -1,0 +1,710 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale = 1.0,maximum-scale = 1.0">
+    <meta name="author" content="Vungle">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Vungle Endcard</title>
+    <script src="vungle.js"></script>
+    <link rel="stylesheet" href="vungle.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="TweenMax.min.js"></script>
+    <script src="TimelineMax.min.js"></script>
+    <script src="hammer.min.js"></script>
+    <script src="stories.js"></script>
+
+    <!-- logo strike start -->
+    <style>#vungle-footer {display: none !important; }</style>
+    <!-- logo strike end -->
+</head>
+
+<body ontouchstart="ontouchstart">
+    <!-- IEC starts here -->
+
+    <div id="vungle-header" class="portrait-dark landscape-dark">
+        <a id="vungle-close" data-icon="i" href="javascript:void(0)" onclick="doSomething('close')"></a>
+    </div>
+    <div id="vungle-footer" class="portrait-dark landscape-dark portrait-left landscape-left"><span class="footer" data-icon="q"></span></div>
+
+    <!-- IEC Creative starts here-->
+
+    <div class="template-center-screen" id="iec">
+        <!-- <div class="header" id="header"> -->
+        </div>
+        <!-- <div class="window" id="white-window"></div> -->
+        <div id="chat-window" class="window">
+            <div class="speech-wrapper" id="speech-wrapper">
+                
+            </div>
+
+            <div class="bubble dots" id="dots">
+                <div class="bubble-arrow dots"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div id="interactive-tooltip" class="interactive-tooltip">
+        <div class="left">
+            <div class="interactive-finger">
+                <div class="icon"></div>
+                <div class="dot"></div>
+            </div>
+        </div>
+        <div class="right">
+            <div class="interactive-text">
+                <span>Tap to continue reading</span>
+            </div>
+        </div>
+    </div>
+
+    <div class = "vungle-cta" id="vungle-cta">
+        <div class="icon-img" id="icon-img">
+            <img src="app-icon.jpg">
+        </div>
+        <div class="icon-text" id="icon-text">
+            <!-- <h2>YARN</h2> -->
+            <img src="name.png">
+            <p> Chat & Text Stories</p>
+        </div>
+
+        <div class = "cta-holder" id = "cta">
+            <a href="javascript:void(0)" onclick="doSomething('download')" class="cta ">
+                <span>DOWNLOAD</span><span class="arrow" data-icon="j"></span>
+            </a>
+        </div>
+    </div>
+
+    <!-- <button id="goFS">Go fullscreen</button> -->
+
+
+    <!-- IEC Creative ends here -->
+
+    <script type="text/javascript">
+
+        var state = 0; //0 - conversation starter, 1 - chat
+        var categorySelected  = 1; //1 is default
+        var chatBotState = 0;
+        var whiteWindow;
+
+        var dots;
+        var optionsDiv;
+        var displayOptions = false;
+        var lastMessage = "";
+        var currentOptions;
+
+        var storyNode = 0;
+
+        var nextStoryNode = -1;
+
+        var endConversation = false;
+
+        var date;
+
+        var showVungleCloseBtnDelay = 5000;
+
+        var playingFlag;
+
+        var mytimer;
+
+        var tooltip = document.getElementById("interactive-tooltip");
+        var wrap = document.getElementById("speech-wrapper");
+
+        function doSomething(s) {
+            return actionClicked(s);
+        }
+
+        function showVungleCloseBtn() {
+            document.getElementById('vungle-close').className = "visible";
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // updateState();
+            whiteWindow = document.getElementById("chat-window");
+            dots = document.getElementById("dots");
+            dotsMessage = document.getElementById("is-typing");
+            // optionsDiv = document.getElementById("options");
+
+            setTimeout(function() {
+                // document.getElementById('interactive-tooltip').classList.remove('visible');
+                showVungleCloseBtn();
+                if(!tooltip.style.opacity)
+                    hide(tooltip, 0);
+            }, showVungleCloseBtnDelay);
+
+            initChatBot();
+
+            date = new Date();
+        });
+
+        function initChatBot() {
+            whiteWindow.className += " windowAnim";
+            setTimeout(function(){
+                document.getElementById("chat-window").style.display = "initial";
+                // document.getElementById("conversation-starter").style.display = "none";
+                whiteWindow.className += "window";
+
+                updateChatBot();
+                
+            },400);
+        }
+
+
+
+         // var endConversation = true;        //Takes actual bot state and goes to next bot state (next storyNode)
+        function updateChatBot(){            
+            playingFlag = false;
+            var delay = 1000;
+            //Show dots for a while, then show message
+            if (!endConversation){
+                var speaker = getSpeaker();
+                if(speaker!="system")
+                    dotsIn(speaker);
+                else
+                    delay = 100;
+
+                setTimeout(function() {
+                    if (speaker != "system")
+                        dotsOut();
+                    
+                    instantiateChatMessage(speaker);
+                    
+                    setTimeout(function(){
+                        repositionChatSpeechWrapper(0.5);
+                        playingFlag = true;
+                    }, 50);
+
+                    if (nextStoryNode != -1) {
+                        storyNode = nextStoryNode;
+                        nextStoryNode = -1;
+                    } else {
+                        storyNode++;
+                    }
+                    
+                    // setTimeout(function(){
+                    //     updateChatBot();
+                    // }, 1000);
+                    mytimer = setTimeout(function(){
+                        updateChatBot();
+                    }, 2000);
+
+                }, delay);
+                
+            } else {
+                setTimeout(function(){
+                    finalCtaAnimation();
+                }, 100);
+            }
+        }
+
+        document.body.addEventListener("touchstart", function(e){
+            console.log("need to play ");
+            
+            if(!tooltip.style.opacity)
+                    hide(tooltip, 0);
+            showVungleCloseBtn();
+            
+            if(storyNode < getStory().length){
+                // e.preventDefault();
+                if(playingFlag){
+                    clearTimeout(mytimer);
+                    updateChatBot();
+                }
+            }
+
+        });
+
+        function getNextStoryMessage(){
+            var story = getStory();
+            var chatMessage;
+
+            if (undefined !== story[storyNode].m) {
+                chatLabel = story[storyNode].label;
+                chatMessage = story[storyNode].m;
+                displayOptions = false;
+                if (undefined !== story[storyNode].next){
+                    nextStoryNode = getStoryNodeFromLabel(story[storyNode].next);
+                    if (nextStoryNode == -1){
+                        endConversation = true;
+                    }
+                }
+            } else if (undefined !== story[storyNode].question) {
+                chatMessage = story[storyNode].question;
+                displayOptions = true;
+            }
+            return processMessage(chatMessage);
+        }
+
+        /* Processes message, adds emoticons */
+        function processMessage(message){
+            console.log(message);
+            if (message.includes(":)")){
+                // if (date.getHours() >= 18) {
+                //     message = message.replace(":)", '<img class="emoji" src="moon_smile.svg">');
+                // } else {
+                //     message = message.replace(":)", '<img class="emoji" src="sun_smile.svg">');
+                // }
+            }
+            message = message.replace(":)", '<img class="emoji" src="1f642.svg">');
+            message = message.replace(":D", '<img class="emoji" src="1f600.svg">');
+            message = message.replace(";)", '<img class="emoji" src="1f609.svg">');
+            message = message.replace("*moneybag*", '<img class="emoji" src="1f4b0.svg">');
+            message = message.replace("*dollar*", '<img class="emoji" src="1f4b5.svg">');
+            message = message.replace("*angel*", '<img class="emoji" src="1f607.svg">');
+            message = message.replace("*dress*", '<img class="emoji" src="1f457.svg">');
+            message = message.replace("*shoe*", '<img class="emoji" src="1f460.svg">');
+            message = message.replace("*handok*", '<img class="emoji" src="1f44c.svg">');
+            message = message.replace("*moneyface*", '<img class="emoji" src="1f911.svg">');
+            message = message.replace("*fire*", '<img class="emoji" src="1f525.svg">');
+            message = message.replace("*thumbsup*", '<img class="emoji" src="1f44d.svg">');
+            message = message.replace("*phone*", '<img class="emoji" src="1f4f2.svg">');
+            message = message.replace("*fingerright*", '<img class="emoji" src="1f449.svg">');
+            message = message.replace("*shopping*", '<img class="emoji" src="1f6cd.svg">');
+            message = message.replace("*nails*", '<img class="emoji" src="1f485.svg">');
+            message = message.replace("*lipstick*", '<img class="emoji" src="1f484.svg">');
+            message = message.replace("*present*", '<img class="emoji" src="1f381.svg">');
+            message = message.replace("*watch*", '<img class="emoji" src="231a.svg">');
+            message = message.replace("*martian*", '<img class="emoji" src="1f47e.svg">');
+            message = message.replace("*tie*", '<img class="emoji" src="1f454.svg">');
+            message = message.replace("*suit*", '<img class="emoji" src="1f574.svg">');
+            message = message.replace("*kiss*", '<img class="emoji" src="1f61a.svg">');
+            console.log(message);
+            return message;
+        }
+
+        function getNextStoryImages(){
+            var story = getStory();
+
+            if (undefined !== story[storyNode].images) {
+                return story[storyNode].images;
+            }
+            return null;
+        }
+
+        function getOptions(){
+            currentOptions = getStory()[storyNode].answers;
+            console.log(currentOptions);
+            return currentOptions;
+        }
+
+        function getStory() {
+            switch (categorySelected - 1) {
+                case 0:
+                    return story1;
+                    break;
+            }
+        }
+
+        function getSpeaker() {
+            var story = getStory();
+
+            if (undefined !== story[storyNode].s) {
+                return story[storyNode].s;;
+            }
+        }
+
+        function getWaitingTime() {
+            var story = getStory();
+
+            if (undefined !== story[storyNode].wait) {
+                return story[storyNode].wait;
+            }
+            return 1500;
+        }
+
+        function instantiateChatMessage(speaker){
+            var div = document.createElement("div");
+            div.className = "bubble";
+            if(speaker == 'B'){
+                div.classList += " alt";
+            }else if(speaker == "system"){
+                div.className = "system";
+            }
+            var divTxt = document.createElement("div");
+            divTxt.className = "txt";
+
+            var divMessage = document.createElement("div");
+            divMessage.className = "message";
+            if(speaker == 'B'){
+                divMessage.classList += " alt";
+            }
+
+            lastMessage = getNextStoryMessage();
+            divMessage.innerHTML = lastMessage;
+
+            divTxt.appendChild(divMessage);
+            var divArrow = document.createElement("div");
+            divArrow.className="bubble-arrow";
+            if(speaker == 'B'){
+                divArrow.classList += " alt";
+            }
+            
+            div.appendChild(divTxt);
+            div.appendChild(divArrow);
+            document.getElementById("speech-wrapper").appendChild(div);
+
+            //If there are, we add images
+            var images = getNextStoryImages();
+            if (images != null) {
+                var divImages = document.createElement("div");
+                divImages.className = "bubbleImages";
+                for (var i = 0; i < images.length; i++) {
+                    var imgDiv = document.createElement("img");
+                    imgDiv.src = images[i];
+                    divImages.appendChild(imgDiv);
+                }
+                div.appendChild(divImages);
+            }
+        }
+
+        function instantiateThisChatMessage(message){
+            var div = document.createElement("div");
+            div.className = "bubble";
+            var divTxt = document.createElement("div");
+            divTxt.className = "txt";
+            var divMessage = document.createElement("div");
+            divMessage.className = "message";
+            divMessage.innerHTML = message;
+            divTxt.appendChild(divMessage);
+            var divArrow = document.createElement("div");
+            divArrow.className="bubble-arrow";
+            div.appendChild(divTxt);
+            div.appendChild(divArrow);
+            document.getElementById("speech-wrapper").appendChild(div);
+        }
+
+        function instantiateUserMessage(opt){
+            var div = document.createElement("div");
+            div.className = "bubble alt";
+            var divTxt = document.createElement("div");
+            divTxt.className = "txt";
+            var txtP = document.createElement("div");
+            txtP.className = "message alt";
+            txtP.innerHTML = processMessage(currentOptions[opt].m);
+            divTxt.appendChild(txtP);
+           
+            div.appendChild(divTxt);
+            // div.appendChild(divArrow);
+            document.getElementById("speech-wrapper").appendChild(div);
+        }
+
+
+        function getStoryNodeFromLabel(label){
+            var story = getStory();
+            for (var i = 0; i < story.length ; i++){
+                if (undefined !== story[i].label) {
+                    if (story[i].label == label) {
+                        return i;
+                    }
+                }
+            }
+            return -1;
+        }
+
+        /* Moves contents in speech bubbles up when they exceed size of screen */
+        function repositionChatSpeechWrapper(duration){
+
+            var scrollAmount = 35;
+
+            if (isPortrait()) {
+                scrollAmount = 35;
+                if (lastMessage == "download to continue") {
+                    scrollAmount = 70;
+                }
+            } else {
+                scrollAmount = 25;
+                if (lastMessage == "download to continue") {
+                    scrollAmount = 70;
+                }
+            }
+
+            if (document.getElementById("speech-wrapper").offsetHeight > (100-scrollAmount) * document.body.scrollHeight/100) {
+                var newTopValue = (10 * document.body.scrollHeight/100 - (document.getElementById("speech-wrapper").offsetHeight - document.body.scrollHeight) - (scrollAmount+10) * document.body.scrollHeight/100);
+                TweenLite.to(
+                    wrap,
+                    duration,
+                    {
+                        top: newTopValue,
+                    });
+            } 
+        }
+
+        function finalCtaAnimation(){
+            //App icon
+            var div = document.createElement("div");
+            div.className = "app-icon";
+            // var imgDiv = document.createElement("img");
+            // imgDiv.src = "app_icon.png";
+            // div.appendChild(imgDiv);
+            //Slogan
+            var divSlogan = document.createElement("div");
+            divSlogan.className = "slogan";
+            divSlogan.innerHTML = "What did Maxine see?<br>Download to continue";
+            div.appendChild(divSlogan);
+
+            document.getElementById("speech-wrapper").appendChild(div);
+            setTimeout(function(){
+                    console.log("final cta animation reposition!");
+                        repositionChatSpeechWrapper(1);
+
+                        setTimeout(function(){
+                            whiteWindow.style.opacity = 0.2;
+                            var vungleCta = document.getElementById("vungle-cta");
+                            var img = document.getElementById("icon-img");
+                            var text = document.getElementById("icon-text");
+                            var cta = document.getElementById("cta");
+
+                            vungleCta.classList += " complete";
+
+                            img.classList += " complete";
+                            text.classList += " complete";
+                            cta.classList += " complete";
+                            // if (isPortrait()) {
+                                
+                            //     moveUp(img, 125, -400, 1, false);
+                            //     moveUp(text, 20, -250, 1, false);
+                            //     moveUp(cta, -110, -100, 1, true);
+                            // }else {
+                            //     moveUp(img, -220, -60, 1, false);
+                            //     moveUp(text, -220, -10, 1, false);
+                            //     moveUp(cta, -220, 10, 1.5, true);
+                            // }
+                        }, 2000);
+                        
+                    }, 200);
+        }
+
+        var offset;
+        var dotToBottom;
+
+        if(isPortrait()){
+            
+            offset = 12;
+            dotToBottom = document.getElementById("speech-wrapper").offsetHeight+ offset + 27;
+
+            if(document.body.offsetHeight >= 768){
+                 dotToBottom =  Math.round( dotToBottom / 1.6);
+                }
+
+            console.log("+++ dotToBottom-default:"+ dotToBottom);
+
+        }else{
+
+            offset = 23;
+            dotToBottom = document.getElementById("speech-wrapper").offsetHeight + offset - 2;
+
+            if(document.body.offsetWidth >= 768){
+                 dotToBottom =  Math.round( dotToBottom / 1.15);
+                }
+
+            console.log("+++ dotToBottom-default:"+ dotToBottom);
+            
+        }
+       
+        function dotsIn(speaker) {
+
+            var cta = document.getElementById("vungle-cta");
+            var chatWindow = document.getElementById("chat-window");
+            var windowHeight = document.body.scrollHeight;
+            var windowWidth = document.body.scrollWidth;
+            var currentBubble, previousBubble, difference;
+            currentBubble= wrap.childNodes[wrap.childNodes.length - 1];
+            
+
+
+            var scroll = Math.round( currentBubble.clientHeight / windowHeight * 100 *1.23) ;
+
+            offset = scroll? scroll: offset;
+
+
+            dots.style.opacity = "1";
+            // dotsMessage.style.opacity = "1";
+            console.log("!!window.height" + windowHeight);
+            console.log("!!scroll" + scroll);
+
+            if(isPortrait()){
+                if(windowHeight >= 768) {
+                    min = 28;
+                    offset *= 1.1;
+                    bottom = 1;
+                }
+                else{
+                    min = 20;
+                    bottom = 3;
+                }
+
+                if(dotToBottom > min )
+                    dotToBottom -= offset;
+                else
+                    dotToBottom = bottom;   
+
+            }else{
+                if(windowWidth >= 768) {
+                    min = 35;
+                    offset *= 1.2;
+                    bottom = 15;
+                }
+                else{
+                    min = 25;
+                    bottom = 10;
+                }
+
+                
+
+                    if(dotToBottom > min)
+                        dotToBottom -= offset;
+                    else
+                        dotToBottom = bottom;
+                
+                
+                
+            }
+
+            console.log("!!dotobottom: " + dotToBottom);
+            
+            dots.style.bottom = dotToBottom + "vh" ;
+            // dots.style.bottom = scroll + "px";
+
+            if(speaker == 'B') {
+                dots.classList += " alt";
+            }else{
+                dots.className = "bubble dots";
+            }
+        }
+
+        function dotsOut() {
+            dots.style.opacity = "0";
+            // dotsMessage.style.opacity = "0";
+        }
+
+        // TweenMax animations library
+        function show(element, duration, dly) {
+            element.style.display = "block";
+            TweenLite.to(
+                element, duration,
+                {
+                    opacity: 1,
+                    delay: dly,
+                    ease: Quad.easeInOut,
+                });
+        }
+
+        function up(element, duration, dly) {
+            TweenLite.to(
+                element, duration,
+                {
+                    delay: dly,
+                    transform: 'translate3d(0,-2vw,0)',
+                    ease: Quad.easeInOut,
+                    onComplete: function () {
+                        //
+                    }
+                });
+        }
+
+        function hide(element, delay) {
+            console.log(delay);
+            TweenLite.fromTo(
+                element, 1, {
+                    opacity: 1,
+                    x: 0
+                }, {
+                    opacity: 0,
+                    x: 100,
+                    delay: delay,
+                    ease: Quad.easeInOut,
+                    onComplete: function () {
+                        element.style.display = "none";
+                    }
+                });
+        }
+
+        function zoomOut(e, d) {
+            TweenLite.fromTo(
+                e, .6, {
+                    scale: 1.5
+                }, {
+                    scale: 1,
+                    delay: d,
+                    ease: Quad.easeInOut,
+                });
+        }
+
+        function zoomIn(e, d) {
+            TweenLite.fromTo(
+                e, .6, {
+                    scale: 1
+                }, {
+                    scale: 1.5,
+                    delay: d,
+                    ease: Quad.easeInOut,
+                });
+        }
+
+        function explode(e, d) {
+            TweenLite.fromTo(
+                e, .6, {
+                    scale: .5,
+                    opacity: 0
+                }, {
+                    scale: 1,
+                    opacity: 1,
+                    delay: d,
+                    ease: Expo.easeOut,
+                    onComplete: function () {
+                        hide(e, 0);
+                        zoomIn(e, 0);
+                    }
+                });
+        }
+
+        function moveUp(_e, _x = 125, _y = -400, _d, ani) {
+            var tl = new TimelineMax({
+                repeat:0,
+                onComplete:  function () {
+                    if(ani) {
+                        // document.getElementById("cta").classList += " end";
+                        pulse(_e, _d);
+                    }
+                }
+            });
+
+            tl.to(
+                _e, _d, {
+                    y: _y,
+                    x: _x,
+                    scale: 1.2,
+                    delay: .5,
+                    ease: Expo.easeInOut,
+                });
+        }
+
+
+        function pulse(e, d){
+
+            TweenMax.to(e, 1, {scale: 1.05, repeat:-1, yoyo:true});
+        }
+
+        window.onresize = function () {
+            console.log("resize");
+            repositionChatSpeechWrapper(.5);
+        };
+        document.ontouchmove = function (e) {
+            e.preventDefault();
+        }
+
+        function isPortrait(){
+            return window.innerHeight > window.innerWidth;
+        }
+
+        function isLandscape() {
+            return window.innerWidth > window.innerHeight;
+        }
+
+    </script>
+</body>
+
+</html>
